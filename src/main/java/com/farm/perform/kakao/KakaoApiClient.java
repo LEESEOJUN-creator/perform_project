@@ -25,10 +25,9 @@ public class KakaoApiClient {
 
     // 카카오 AccessToken 발급
     public String getAccessToken(String code) {
-        HttpHeaders headers = new HttpHeaders();
+        HttpHeaders headers = new HttpHeaders(); // http요청에 넣을 헤더 객체를 생성한다
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        // 🔑 form-urlencoded 형식으로 바꿔야 함
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", clientId);
@@ -47,7 +46,6 @@ public class KakaoApiClient {
         return response.getBody().accessToken;
     }
 
-    // 카카오 유저 정보 조회
     public KakaoUserInfo getUserInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + accessToken);
@@ -62,6 +60,5 @@ public class KakaoApiClient {
         ).getBody();
     }
 
-    // 응답 DTO
     public record KakaoTokenResponse(@JsonProperty("access_token") String accessToken) {}
 }

@@ -33,7 +33,6 @@ public class UserService {
     @Value("${jwt.refresh-token-expire-time}")
     private long refreshTokenExpireTime;
 
-    /** 회원가입 */
     @Transactional
     public void signUp(SignUpRequestDto requestDTO) {
         if (!requestDTO.password().equals(requestDTO.passwordConfirm())) {

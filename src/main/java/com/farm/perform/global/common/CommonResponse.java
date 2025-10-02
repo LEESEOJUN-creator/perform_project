@@ -6,9 +6,9 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class CommonResponse<T> {
-    private boolean success;  // 성공 여부
-    private String message;   // 응답 메시지
-    private T data;           // 응답 데이터
+    private boolean success;
+    private String message;
+    private T data;
 
     public static <T> CommonResponse<T> success(String message, T data) {
         return new CommonResponse<>(true, message, data);

@@ -3,9 +3,7 @@ package com.farm.perform.global.jwt;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -18,23 +16,19 @@ public class JwtProvider {
     private static final String CLAIM_ROLE = "role";
     private static final String CLAIM_TYPE = "type";
 
-    private Key secretKey;
-    private JwtParser jwtParser;
+    private final Key secretKey;
+    private final JwtParser jwtParser;
+    private final JwtProps jwtProps;
 
-    @Value("${jwt.secret}")
-    private String secretKeyString;
+    public JwtProvider(JwtProps jwtProps) {
+        this.jwtProps = jwtProps;
 
-    @Value("${jwt.access-token-expire-time}")
-    private long accessTokenExpireTime;
-
-    @Value("${jwt.refresh-token-expire-time}")
-    private long refreshTokenExpireTime;
-
-    @PostConstruct
-    public void init() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKeyString);
+        byte[] keyBytes = Decoders.BASE64.decode(jwtProps.getSecret());
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
-        this.jwtParser = Jwts.parserBuilder().setSigningKey(secretKey).build();
+
+        this.jwtParser = Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build();
     }
 
     private String generateToken(Long userId, String role, String type, long expireTime) {
@@ -43,8 +37,8 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
-                .claim(CLAIM_ROLE, role)   // 커스텀 Claim (role)
-                .claim(CLAIM_TYPE, type)   // 커스텀 Claim (access/refresh)
+                .claim(CLAIM_ROLE, role)
+                .claim(CLAIM_TYPE, type)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(secretKey, SignatureAlgorithm.HS256)
@@ -52,11 +46,11 @@ public class JwtProvider {
     }
 
     public String generateAccessToken(Long userId, String role) {
-        return generateToken(userId, role, "access", accessTokenExpireTime);
+        return generateToken(userId, role, "access", jwtProps.getAccessTokenExpireTime());
     }
 
     public String generateRefreshToken(Long userId, String role) {
-        return generateToken(userId, role, "refresh", refreshTokenExpireTime);
+        return generateToken(userId, role, "refresh", jwtProps.getRefreshTokenExpireTime());
     }
 
     public boolean validateToken(String token) {

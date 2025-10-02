@@ -41,22 +41,22 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // 만료 정책 없으면 true
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // 잠금 정책 없으면 true
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // 비밀번호 만료 정책 없으면 true
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return !user.isDeleted(); // soft delete 된 경우 비활성화
+        return !user.isDeleted();
     }
 
     /** User 엔티티 주요 값 접근용 헬퍼 */
