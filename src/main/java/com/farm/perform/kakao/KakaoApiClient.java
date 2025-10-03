@@ -2,7 +2,6 @@ package com.farm.perform.kakao;
 
 import com.farm.perform.kakao.dto.KakaoUserInfo;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -15,50 +14,60 @@ public class KakaoApiClient {
     private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String USERINFO_URL = "https://kapi.kakao.com/v2/user/me";
 
-    @Value("${kakao.client-id}")
-    private String clientId;
+    private final KakaoProps kakaoProps;
+    private final RestTemplate restTemplate;
 
-    @Value("${kakao.redirect-uri}")
-    private String redirectUri;
+    public KakaoApiClient(KakaoProps kakaoProps) {
+        this.kakaoProps = kakaoProps;
+        this.restTemplate = new RestTemplate();
+    }
 
-    private final RestTemplate restTemplate = new RestTemplate();
-
-    // 카카오 AccessToken 발급
     public String getAccessToken(String code) {
-        HttpHeaders headers = new HttpHeaders(); // http요청에 넣을 헤더 객체를 생성한다
+        HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
-        params.add("client_id", clientId);
-        params.add("redirect_uri", redirectUri);
+        params.add("client_id", kakaoProps.getClientId());
+        params.add("redirect_uri", kakaoProps.getRedirectUri());
         params.add("code", code);
 
         HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
 
-        ResponseEntity<KakaoTokenResponse> response = restTemplate.exchange(
-                TOKEN_URL,
-                HttpMethod.POST,
-                entity,
-                KakaoTokenResponse.class
-        );
+        try {
+            ResponseEntity<KakaoTokenResponse> response = restTemplate.exchange(
+                    TOKEN_URL,
+                    HttpMethod.POST,
+                    entity,
+                    KakaoTokenResponse.class
+            );
 
-        return response.getBody().accessToken;
+            KakaoTokenResponse body = response.getBody();
+            if (body == null || body.accessToken() == null) {
+                throw new IllegalStateException("카카오에서 access_token을 받지 못했습니다.");
+            }
+            return body.accessToken();
+
+        } catch (Exception e) {
+            throw new RuntimeException("카카오 토큰 요청 실패", e);
+        }
     }
 
     public KakaoUserInfo getUserInfo(String accessToken) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + accessToken);
+        headers.setBearerAuth(accessToken);
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         return restTemplate.exchange(
                 USERINFO_URL,
-                HttpMethod.POST,
+                HttpMethod.GET,
                 entity,
                 KakaoUserInfo.class
         ).getBody();
     }
 
-    public record KakaoTokenResponse(@JsonProperty("access_token") String accessToken) {}
+    public record KakaoTokenResponse(
+            @JsonProperty("access_token") String accessToken
+    ) {}
 }

@@ -23,7 +23,7 @@ public class KakaoUserInfo {
         if (kakaoAccount != null && kakaoAccount.profile != null) {
             return kakaoAccount.profile.nickname;
         }
-        return "카카오유저"; // 기본값
+        return "카카오유저";
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
